@@ -1,0 +1,138 @@
+<!-- src/app/components/budget-table/budget-table.component.html -->
+<div class="flex flex-col">
+  <div class="flex space-x-4 mb-4 ml-4">
+      <mat-form-field>
+        <mat-label>Start Month</mat-label>
+        <input matInput [matDatepicker]="startDatepicker" (dateChange)="onStartMonthChange($event)" [value]="startMonth()">
+        <mat-datepicker-toggle matIconSuffix [for]="startDatepicker"></mat-datepicker-toggle>
+        <mat-datepicker #startDatepicker></mat-datepicker>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>End Month</mat-label>
+      <input matInput [matDatepicker]="endDatepicker" (dateChange)="onEndMonthChange($event)" [value]="endMonth()">
+      <mat-datepicker-toggle matIconSuffix [for]="endDatepicker"></mat-datepicker-toggle>
+      <mat-datepicker #endDatepicker></mat-datepicker>
+    </mat-form-field>
+</div>
+
+<div class="overflow-x-auto">
+  <table class="min-w-full bg-white border border-gray-300">
+    <thead>
+       <tr>
+          <th class="py-2 px-4 border-b border-r"></th>
+          <th class="py-2 px-4 border-b border-r"></th>
+          <th *ngFor="let month of budgetData().months; let i=index"
+            class="py-2 px-4 border-b border-r text-left w-max">{{month.monthName}} {{month.year}}
+          </th>
+       </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let category of budgetData().categories; let categoryIndex = index">
+        <ng-container>
+          <ng-container *ngFor="let subCategory of category.subCategories; let j = index; trackBy: trackBySubCategory">
+            <tr>
+              <td *ngIf="j === 0"
+                  class="py-2 px-4 border-b border-r font-semibold align-top text-center"
+                  [attr.rowspan]="category.subCategories.length + 1">
+                  <input type="text" class="category-input w-full border-gray-300 focus:ring-0 focus:border-blue-500 mb-2"
+                    [value]="category.name"
+                    (blur)="updateCategoryName(category.id, $event)"
+                    (keydown.enter)="updateCategoryName(category.id, $event)"
+                  />
+                <div class="flex flex-col gap-1">
+                  <button class="py-2 px-3 text-sm rounded-lg border border-solid border-emerald-200 text-emerald-600 cursor-pointer font-semibold text-center shadow-xs transition-all duration-500 hover:bg-emerald-600 hover:text-white"
+                    (click)="addCategory('New Sub Category', category.name)">Add Sub
+                </button>
+                  <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded"
+                    (click)="deleteParentCategory(category.id)"
+                    *ngIf="budgetData().categories.length > 1">Delete
+                  </button>
+                </div>
+              </td>
+              <td class="py-2 px-4 border-b border-r">
+                  <input type="text" class="w-full border-gray-300 focus:ring-0 focus:border-blue-500 category-input"
+                    [value]="subCategory.name"
+                    (blur)="updateSubCategoryName(category.id, subCategory.id, $event)"
+                    (keydown.enter)="updateSubCategoryName(category.id, subCategory.id, $event)"
+                    (focus)="handleCellFocus(category.id, subCategory.id, 0)"
+                  />
+              </td>
+              <td *ngFor="let month of budgetData().months; let k = index; trackBy: trackByMonth"
+                  class="py-2 px-4 border-b border-r text-left !static">
+                  <input
+                    id="cell-{{category.id}}-{{subCategory.id}}-{{k}}"
+                    #firstInput
+                    type="number"
+                    class="w-full border-gray-300 focus:ring-0 focus:border-blue-500 text-right"
+                    [value]="subCategory.values[month.yearMonth] !== undefined ? subCategory.values[month.yearMonth] : 0"
+                    (focus)="handleCellFocus(category.id, subCategory.id, k)"
+                    (blur)="updateCellValue(category.id, subCategory.id, k, $event)"
+                    (contextmenu)="onContextMenu($event, category.id, subCategory.id, k)"
+                  />
+              </td>
+            </tr>
+          </ng-container>
+          <tr>
+            <td class="py-2 px-4 border-b border-r text-left font-bold">Sub Total</td>
+            <td *ngFor="let month of budgetData().months; let l=index" class="py-2 px-4 border-b border-r text-right !static">
+                {{getSubtotal(category.id, l)}}
+            </td>
+          </tr>
+        </ng-container>
+      </ng-container>
+
+      <tr>
+        <td class="py-2 px-4 border-b border-r text-left font-bold !z-[3]" colspan="2">Total Income</td>
+        <td *ngFor="let month of budgetData().months; let i=index"
+            class="py-2 px-4 border-b border-r text-right font-bold">
+            {{getTotalIncome(i)}}
+        </td>
+      </tr>
+      <tr>
+        <td class="py-2 px-4 border-b border-r text-left font-bold !z-[3]" colspan="2">Total Expenses</td>
+        <td *ngFor="let month of budgetData().months; let i = index"
+            class="py-2 px-4 border-b border-r text-right font-bold">
+            {{getTotalExpenses(i)}}
+        </td>
+      </tr>
+      <tr>
+        <td class="py-2 px-4 border-b border-r text-left font-bold !z-[3]" colspan="2">Profit / Loss</td>
+        <td *ngFor="let month of budgetData().months; let i = index"
+            class="py-2 px-4 border-b border-r text-right font-bold">
+            {{getProfitLoss(i)}}
+        </td>
+      </tr>
+      <tr>
+        <td class="py-2 px-4 border-b border-r text-left font-bold !z-[3]" colspan="2">Opening Balance</td>
+        <td *ngFor="let month of budgetData().months; let i=index"
+            class="py-2 px-4 border-b border-r text-right font-bold">
+            {{getOpeningBalance(i)}}
+        </td>
+      </tr>
+      <tr>
+        <td class="py-2 px-4 border-b border-r text-left font-bold !z-[3]" colspan="2">Closing Balance</td>
+        <td *ngFor="let month of budgetData().months; let i=index"
+            class="py-2 px-4 border-b border-r text-right font-bold">
+            {{getClosingBalance(i)}}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+
+</div>
+
+<div class="flex flex-start my-4 ml-4">
+  <button class="py-2.5 px-6 flex items-center gap-2 text-sm max-h-max bg-indigo-500 text-white rounded-lg cursor-pointer font-medium text-center shadow-xs transition-all duration-500 hover:bg-indigo-700"
+  (click)="addParentCategory('New Parent Category')">Add new Parent Category
+  </button>
+</div>
+
+  <div *ngIf="isContextMenuVisible()"
+  class="absolute z-10 bg-white border border-gray-300 rounded shadow-md"
+  [style.left.px]="contextMenuX()"
+  [style.top.px]="contextMenuY()">
+    <button (click)="applyValueToAll()" class="block w-full px-4 py-2 hover:bg-gray-100">Apply to All</button>
+  </div>
+</div>

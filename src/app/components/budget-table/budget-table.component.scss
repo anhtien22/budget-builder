@@ -1,0 +1,34 @@
+.category-input {
+  border: none;
+  background: none;
+    padding: 0;
+}
+
+.category-input:focus{
+  padding: 0 4px;
+}
+.table-container {
+  overflow-x: auto; /* Enable horizontal scrolling */
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%; /* Make the table take up the container width */
+}
+table th, table td{
+  white-space: nowrap;
+}
+
+table th:nth-child(1), table td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 2;
+}
+
+table th:nth-child(2), table td:nth-child(2) {
+  position: sticky;
+  left: 0; /* Adjust based on width of your first column */
+   background-color: #fff; /* Ensure it covers the content behind */
+  z-index: 2;
+}
